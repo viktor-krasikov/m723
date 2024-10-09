@@ -2,12 +2,15 @@ import telebot
 import json
 from pymystem3 import Mystem
 import spacy
-from pymorphy2 import MorphAnalyzer
+from pymorphy3 import MorphAnalyzer
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 nlp = spacy.load("ru_core_news_sm")
 morph = MorphAnalyzer()
 
-TOKEN = "7638458680:AAGklvEutJxXaIm0vPDTXTW6epWlbT159HU"
+TOKEN = os.getenv('TOKEN')
 
 bot = telebot.TeleBot(TOKEN)
 
