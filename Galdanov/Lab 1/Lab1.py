@@ -20,7 +20,7 @@ def analyze(message):
         b = morph.parse(i)
         for k in b:
             tag_builder.append(str(k.tag))
-        answer = answer + i + '\n' + '\n'.join(f"{n} {j}" for n, j in enumerate(tag_builder, start=1)) + '\n' #построение сообщения для бота, pymorphy3
+        answer = answer + i + '\n' + '\n' + '\n'.join(f"{n} {j}" for n, j in enumerate(tag_builder, start=1)) + '\n' #построение сообщения для бота, pymorphy3
 
     answer_2 = "Вывод mystem3\n"
     for i in word:
@@ -48,7 +48,7 @@ bot.polling(none_stop=True, interval=0)
 #         tag_builder.append(str(k.tag))
 #     answer = answer + i + '\n' + '\n'.join(f"{n} {j}" for n, j in enumerate(tag_builder, start=1)) + '\n' #построение сообщения для бота, pymorphy3
 # print(answer)
-
+# программа для обращения к гигачату, текстовый запрос и текстовый ответ
 
 # word = input()
 # words = word.split(' ')
