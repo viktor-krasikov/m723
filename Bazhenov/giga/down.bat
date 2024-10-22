@@ -1,0 +1,1 @@
+py -m pip install pyTelegramBotAPI langchain certifi requests aiohttp gigachat gigachain-cli langchain-community python-dotenv
