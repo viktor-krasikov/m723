@@ -45,7 +45,8 @@ def normalize_city_name(city):
 # Проверка, был ли город уже назван (с нормализацией названий)
 def is_city_used(city, played_cities):
     normalized_city = normalize_city_name(city)
-    return any(normalized_city == normalize_city_name(c) for c in played_cities)
+    first_letter = normalized_city[0].lower()
+    return any(normalized_city == normalize_city_name(c) for c in played_cities if normalize_city_name(c)[0].lower() == first_letter)
 
 def start_timer(chat_id, timeout=60):
     if chat_id in user_timers:
@@ -53,6 +54,7 @@ def start_timer(chat_id, timeout=60):
     timer = threading.Timer(timeout, handle_time_out, [chat_id])
     user_timers[chat_id] = timer
     timer.start()
+
 
 def handle_time_out(chat_id):
     bot.send_message(chat_id, "Время на ход вышло! Вы проиграли.")
@@ -212,9 +214,11 @@ if __name__ == '__main__':
 #     scity = find_city(lastw)
 #     print(scity)
 #     # Добавляем сообщение пользователя в контекст
-#     user_histories[message.chat.id].append(HumanMessage(content='Напиши один город на букву ' + lastw + '. ' +
-#                                                                 'Список, который нельзя называть: ' + ', '.join(
-#         scity) + '.'))
+#     user_histories[message.chat.id].append(
+#         HumanMessage(
+#             content='Напиши один город на букву ' + lastw + '. ' + 'Список, который нельзя называть: ' + ', '.join(scity) + '.'
+#         )
+#     )
 #
 #     print(user_histories[message.chat.id])
 #
