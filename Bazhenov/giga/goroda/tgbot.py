@@ -20,9 +20,10 @@ def start(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_user_message(message):
-    res = game_instance.next(message)
-    print("res=" + res)
-    bot.send_message(message.chat.id, res)
+    chat_id = message.chat.id
+    user_input = message.text.strip()
+    response = game_instance.next(chat_id, user_input)
+    bot.send_message(chat_id, response)
 
 
 if __name__ == '__main__':
