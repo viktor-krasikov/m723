@@ -85,17 +85,21 @@ class GorodaGame:
         # Добавляем город в историю
         self.user_played_cities[chat_id].append(user_input)
 
+
         # Генерация следующего города
+        last_letter_of_user_word = self.extract_last_letter(user_input.lower())
         for _ in range(5):
             next_city = self.connector.generate_city(
-                self.extract_last_letter(user_input),
+                last_letter_of_user_word,
                 self.user_played_cities[chat_id]
             )
 
             # if next_city and not self.is_city_used(next_city, self.user_played_cities[chat_id]):
-            if next_city and not self.is_city_used(next_city, self.user_played_cities[chat_id]) or next_city[0].lower() != last_letter:
-                self.user_played_cities[chat_id].append(next_city)
-                self.start_timer(chat_id)
-                return next_city
+            if next_city:
+                if (not self.is_city_used(next_city, self.user_played_cities[chat_id])
+                        and next_city[0].lower() == last_letter_of_user_word):
+                    self.user_played_cities[chat_id].append(next_city)
+                    self.start_timer(chat_id)
+                    return next_city
         self.stop_game(chat_id)
-        return "Я проиграл!"
+        return f"Я проиграл! не могу придумать город на букву - {last_letter_of_user_word}"
