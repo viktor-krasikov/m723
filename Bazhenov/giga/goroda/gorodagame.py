@@ -3,10 +3,11 @@ from langchain_community.chat_models.gigachat import GigaChat
 import threading
 from gigia_connector import GigaConnector  # Подключение отдельного модуля для GigaChat
 
+
 class GorodaGame:
     def __init__(self):
-        self.user_histories = {}
         self.user_timers = {}
+        self.time_is_up_funcs = {}
         self.user_played_cities = {}
         self.city_info = {}
         self.connector = GigaConnector()  # Инициализация коннектора для GigaChat
@@ -31,32 +32,38 @@ class GorodaGame:
         normalized_city = self.normalize_city_name(city)
         return normalized_city in (self.normalize_city_name(c) for c in played_cities)
 
-    def reset_game(self, chat_id):
-        self.user_histories[chat_id] = self.default_messages.copy()
-        self.user_played_cities[chat_id] = []
-        self.city_info[chat_id] = None
+    def stop_game(self, chat_id):
         if chat_id in self.user_timers:
             self.user_timers[chat_id].cancel()
+        del self.user_played_cities[chat_id]
+        del self.city_info[chat_id]
+        del self.user_timers[chat_id]
+        del self.time_is_up_funcs[chat_id]
 
-    def start_game(self, chat_id):
+    def start_timer(self, chat_id, timeout=60):
+        if chat_id in self.user_timers:
+            self.user_timers[chat_id].cancel()
+        timer = threading.Timer(timeout, self.time_is_up_funcs[chat_id], [chat_id])
+        self.user_timers[chat_id] = timer
+        timer.start()
+
+    def start_game(self, chat_id, time_is_up_fn=None):
         """Начинает новую игру."""
-        self.reset_game(chat_id)
+        self.user_played_cities[chat_id] = []
+        self.city_info[chat_id] = None
+        # if chat_id in self.user_timers:
+        #     self.user_timers[chat_id].cancel()
+        self.time_is_up_funcs[chat_id] = time_is_up_fn
         return "Игра началась! Назовите первый город."
 
-    def validate_city(self, chat_id, user_input):
-        """Проверяет корректность города пользователя."""
-        if self.is_city_used(user_input, self.user_played_cities.get(chat_id, [])):
-            return False, f"Город '{user_input}' уже был назван. Попробуйте другой."
-        if self.user_played_cities.get(chat_id):
-            last_letter = self.extract_last_letter(self.user_played_cities[chat_id][-1])
-            if user_input[0].lower() != last_letter:
-                return False, f"Город должен начинаться на букву '{last_letter.upper()}'."
-        return True, None
+    # is_started
+    def __contains__(self, chat_id):
+        return chat_id in self.time_is_up_funcs
 
     def next(self, chat_id, user_input):
-        # Инициализация данных для нового чата
-        if chat_id not in self.user_played_cities:
-            self.reset_game(chat_id)
+
+        if chat_id not in self:
+            return "Сначала начните игру!"
 
         # Проверка, был ли город уже использован
         if self.is_city_used(user_input, self.user_played_cities[chat_id]):
@@ -79,11 +86,16 @@ class GorodaGame:
         self.user_played_cities[chat_id].append(user_input)
 
         # Генерация следующего города
-        while True:
+        for _ in range(5):
             next_city = self.connector.generate_city(
                 self.extract_last_letter(user_input),
                 self.user_played_cities[chat_id]
             )
-            if next_city and not self.is_city_used(next_city, self.user_played_cities[chat_id]):
+
+            # if next_city and not self.is_city_used(next_city, self.user_played_cities[chat_id]):
+            if next_city and not self.is_city_used(next_city, self.user_played_cities[chat_id]) or next_city[0].lower() != last_letter:
                 self.user_played_cities[chat_id].append(next_city)
+                self.start_timer(chat_id)
                 return next_city
+        self.stop_game(chat_id)
+        return "Я проиграл!"
