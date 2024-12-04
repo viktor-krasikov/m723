@@ -23,34 +23,53 @@ class GorodaGame:
         town = town.lower()
         return town
 
-    def letter_check(self, word):
+    def letter_check(self, word): # проверка на Ъ Ь Ы у последней буквы
         if word[-1] == "ъ" or word[-1] == "ь" or word[-1] == "ы":
             return word[-2]
         else:
             return word[-1]
 
-    def town_game(self, current_town): # проверка на Ъ Ь Ы у последней буквы
+    def giveup_checker(self, message):
+        message = message.lower()
+        pattern = r'\b(я\s*сдаюсь|сдаюсь|сдамся|сдаюсь|сдатьс|сдаюс\s*я)\b'
+        if re.search(pattern, message):
+            return True
+        else:
+            return False
+
+    def reset_game(self):
+        self.towns.clear()
+
+    def town_game(self, current_town):
         current_town = self.lowercaser(current_town)
-        last_letter = current_town[0]
+        last_letter = current_town[0] #чек для 1го раза
         if self.towns:
-            last_letter = self.towns[-1][-1]
+            last_letter = self.letter_check(self.towns[-1])
         res = ""
 
-        if self.towns:
-            last_letter = self.letter_check(self.towns[-1])  # смотрит последний символ последнего города
-            print("Вывод чек1" + last_letter)
+
+        if self.giveup_checker(current_town):
+            print("Хорошо, давайте начнем снова")
+        else:
             if last_letter == current_town[0]:
+
                 if current_town in self.towns:
                     res = "Этот город уже был"
                 else:
                     self.towns.append(current_town)  # добавление в список городов уже сыгранных
-
                     if self.towncheck(current_town) is False:
                         res = "Этого города не существует"
                     else:
                         placeholder = self.letter_check(current_town)
-                        res = gigacon.generate_town(placeholder, self.towns)
-                        res = self.lowercaser(res)
+                        for i in range(5):
+                            res = gigacon.generate_town(placeholder, self.towns)
+                            res = self.lowercaser(res)
+                            if res not in self.towns:
+                                self.towns.append(res)
+                                break
+                            if i == 4:
+                                res = "Вы выйграли, я не смог придумать город"
+                                self.reset_game()
             else:
                 res = f"Ваш город не начинается на {last_letter} попробуйте ещё раз"
 
