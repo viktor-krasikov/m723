@@ -16,6 +16,5 @@ class GigaCon:
             user_input = f"Назови город начинающийся на {letter} и не являющися городом из этого списка {history}. Ответь одним словом"
         else:
             user_input = f"Назови город начинающийся на {letter}. Ответь одним словом"
-        #TODO чтобы ответы гигачата были нормализированы (убраны точки и заглавные буквы в мелкие превращены)
         gigachat_gen_answer = self.chat([HumanMessage(content=user_input)])
         return gigachat_gen_answer.content
