@@ -1,1 +1,158 @@
+import logging
+import re
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+import pymorphy2
 
+# Включаем логирование
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+morph = pymorphy2.MorphAnalyzer()
+
+# Функция обработчик команды /start
+async def start(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text('Привет! Напиши предложение, и я разберу каждое слово.')
+
+# Функция для обработки текста
+async def handle_message(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    text = update.message.text.strip()  # Получаем полное предложение
+    words = re.findall(r'\b\w+\b', text)  # Находим только слова, игнорируя знаки препинания
+
+    responses = []
+
+    for word in words:
+        # Проверяем, является ли слово числом
+        if word.isdigit():
+            part_of_speech = 'NUMR'  # Установим часть речи как числительное
+            characteristics = ['Числительное']
+            response = f'Слово: {word}\n' \
+                       f'Часть речи: {part_of_speech}\n' \
+                       f'Характеристики: {", ".join(characteristics)}'
+            responses.append(response)
+            continue  # Переходим к следующему слову
+
+        parsed_word = morph.parse(word)
+
+        if parsed_word:
+            best_form = parsed_word[0]
+            part_of_speech = best_form.tag.POS  # Часть речи
+
+            # Получаем и преобразуем характеристики на русский
+            characteristics = []
+
+            if part_of_speech == 'NOUN':  # Существительное
+                characteristics.append('Существительное')
+                characteristics.append('Одушевленное' if 'anim' in best_form.tag else 'Неодушевленное')
+                if 'masc' in best_form.tag:
+                    characteristics.append('Мужской род')
+                elif 'femn' in best_form.tag:
+                    characteristics.append('Женский род')
+                elif 'neut' in best_form.tag:
+                    characteristics.append('Средний род')
+                if 'plur' in best_form.tag:
+                    characteristics.append('Множественное число')
+                elif 'sing' in best_form.tag:
+                    characteristics.append('Единственное число')
+
+            elif part_of_speech == 'ADJF':  # Прилагательное
+                characteristics.append('Прилагательное')
+                if 'masc' in best_form.tag:
+                    characteristics.append('Мужской род')
+                elif 'femn' in best_form.tag:
+                    characteristics.append('Женский род')
+                elif 'neut' in best_form.tag:
+                    characteristics.append('Средний род')
+                if 'plur' in best_form.tag:
+                    characteristics.append('Множественное число')
+                elif 'sing' in best_form.tag:
+                    characteristics.append('Единственное число')
+
+            elif part_of_speech == 'VERB':  # Глагол
+                characteristics.append('Глагол')
+                if 'perf' in best_form.tag:
+                    characteristics.append('Совершенный вид')
+                elif 'impf' in best_form.tag:
+                    characteristics.append('Несовершенный вид')
+                if 'tran' in best_form.tag:
+                    characteristics.append('Переходный')
+                elif 'intr' in best_form.tag:
+                    characteristics.append('Непереходный')
+                if 'plur' in best_form.tag:
+                    characteristics.append('Множественное число')
+                elif 'sing' in best_form.tag:
+                    characteristics.append('Единственное число')
+                if '1per' in best_form.tag:
+                    characteristics.append('1 лицо')
+                elif '2per' in best_form.tag:
+                    characteristics.append('2 лицо')
+                elif '3per' in best_form.tag:
+                    characteristics.append('3 лицо')
+                if 'futr' in best_form.tag:
+                    characteristics.append('Будущее время')
+                elif 'past' in best_form.tag:
+                    characteristics.append('Прошедшее время')
+                elif 'pres' in best_form.tag:
+                    characteristics.append('Настоящее время')
+
+            elif part_of_speech == 'ADVB':  # Наречие
+                characteristics.append('Наречие')
+
+            elif part_of_speech == 'CONJ':  # Союз
+                characteristics.append('Союз')
+
+            elif part_of_speech == 'PRCL':  # Частица
+                characteristics.append('Частица')
+
+            elif part_of_speech == 'INTJ':  # Междометие
+                characteristics.append('Междометие')
+
+            elif part_of_speech == 'NUMR':  # Числительное
+                characteristics.append('Числительное')
+
+            elif part_of_speech == 'NPRO':  # Местоимение
+                characteristics.append('Местоимение')
+
+            elif part_of_speech == 'PREP':  # Предлог
+                characteristics.append('Предлог')
+
+            elif part_of_speech == 'PRTF':  # Причастие
+                characteristics.append('Причастие')
+                if 'masc' in best_form.tag:
+                    characteristics.append('Мужской род')
+                elif 'femn' in best_form.tag:
+                    characteristics.append('Женский род')
+                elif 'neut' in best_form.tag:
+                    characteristics.append('Средний род')
+                if 'plur' in best_form.tag:
+                    characteristics.append('Множественное число')
+                elif 'sing' in best_form.tag:
+                    characteristics.append('Единственное число')
+
+            # Формируем ответ для текущего слова
+            response = f'Слово: {word}\n' \
+                       f'Часть речи: {part_of_speech}\n' \
+                       f'Характеристики: {", ".join(characteristics)}'
+            responses.append(response)
+
+    # Ответим пользователю
+    await update.message.reply_text('\n\n'.join(responses))
+
+# Функция для обработки ошибок
+async def error(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error(f'Обработка {update} вызвала ошибку {context.error}')
+
+def main() -> None:
+    application = ApplicationBuilder().token("8124760136:AAGrOFOzk1rlCiProCNpYQEXa8sbz6_FzkM").build()  # Вставь сюда токен своего бота
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_error_handler(error)
+
+    # Запуск бота
+    application.run_polling()
+
+if __name__ == '__main__':
+    main()
