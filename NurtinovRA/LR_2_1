@@ -1,0 +1,21 @@
+"""Пример работы с чатом через gigachain"""
+from langchain.schema import HumanMessage, SystemMessage
+from langchain.chat_models.gigachat import GigaChat
+
+# Авторизация в сервисе GigaChat
+chat = GigaChat(credentials='MGM0MTMwY2MtNzllMy00Y2ZkLThhM2MtY2MwZDUzNzQ1YjZlOjU1M2Q2ZDA4LTEyMTYtNGJmYS05M2Y3LTAwNDJkNDFhNGJiYQ==', verify_ssl_certs=False)
+
+messages = [
+    SystemMessage(
+        content="Ты детектив в киберпнковском городе к тебе предоставили напарника-новичка (это я)."
+    )
+]
+
+while(True):
+    # Ввод пользователя
+    user_input = input("User: ")
+    messages.append(HumanMessage(content=user_input))
+    res = chat(messages)
+    messages.append(res)
+    # Ответ сервиса
+    print("Bot: ", res.content)
