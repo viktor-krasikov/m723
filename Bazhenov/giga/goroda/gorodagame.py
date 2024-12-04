@@ -6,12 +6,25 @@ from gigia_connector import GigaConnector  # Подключение отдель
 
 class GorodaGame:
     def __init__(self):
+        self.cities_set = self.load_cities("txt-cities-russia.txt")
         self.user_timers = {}
         self.time_is_up_funcs = {}
         self.user_played_cities = {}
         self.city_info = {}
         self.connector = GigaConnector()  # Инициализация коннектора для GigaChat
-        self.default_messages = [SystemMessage(content="Ты играешь в города. Каждый участник называет реально существующий город. Название города должно начинаться на букву, которой оканчивается название предыдущего города, за исключением 'ь' и 'ъ'.")]
+        self.default_messages = [SystemMessage(content="Ты играешь в города. Каждый участник называет реально существующий город России. Название города должно начинаться на букву, которой оканчивается название предыдущего города, за исключением 'ь' и 'ъ'.")]
+
+    def load_cities(self, filename):
+        """Загружает список городов из файла и возвращает его в виде множества."""
+        try:
+            with open(filename, 'r', encoding='utf-8') as file:
+                return set(city.strip().lower() for city in file.readlines())
+        except FileNotFoundError:
+            print(f"Файл {filename} не найден.")
+            return set()
+    def is_city_exist(self, city_name):
+        """Проверяет, существует ли город в загруженном списке."""
+        return city_name.lower() in self.cities_set
 
     def extract_last_letter(self, city):
         """Извлекает последнюю значимую букву названия города."""
@@ -77,7 +90,7 @@ class GorodaGame:
 
         # Проверка существования города
         try:
-            if not self.connector.is_exsit(user_input):
+            if not self.is_city_exist(user_input): #not self.connector.is_exsit(user_input):
                 return f"Город '{user_input}' не существует."
         except Exception as e:
             return f"Ошибка при проверке города: {e}"

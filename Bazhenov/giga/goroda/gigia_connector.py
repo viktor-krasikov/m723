@@ -36,7 +36,8 @@ class GigaConnector:
 
     def is_exsit(self, city):
         response = self.chat_model.invoke(
-            [HumanMessage(content=f"Существует ли город с названием {city}? Ответ: да или нет")])
+            [HumanMessage(content=f"Существует ли город с названием {city}? Ответ: да или нет одним словом")])
+        print(response.content)
         return 'да' in response.content.lower()
         # return response.content if response and response.content else None
 
