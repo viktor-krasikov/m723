@@ -3,7 +3,7 @@ from langchain.schema import HumanMessage, SystemMessage
 from langchain.chat_models.gigachat import GigaChat
 
 # Авторизация в сервисе GigaChat
-chat = GigaChat(credentials='MGM0MTMwY2MtNzllMy00Y2ZkLThhM2MtY2MwZDUzNzQ1YjZlOjU1M2Q2ZDA4LTEyMTYtNGJmYS05M2Y3LTAwNDJkNDFhNGJiYQ==', verify_ssl_certs=False)
+chat = GigaChat(credentials='Токен', verify_ssl_certs=False)
 
 messages = [
     SystemMessage(
