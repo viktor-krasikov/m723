@@ -2,10 +2,11 @@ import telebot
 import speech_recognition as sr
 import os
 import soundfile as sf
+import numpy #он важен
 from gtts import gTTS
 
 # Инициализация Telegram-бота
-API_TOKEN = 'Temp'  # Замените на свой токен
+API_TOKEN = '8186021857:AAFEK8imy5Fmol2f_J2_TnLPiNnC4AXESeg'
 bot = telebot.TeleBot(API_TOKEN)
 
 
