@@ -42,6 +42,7 @@ class GorodaGame:
 
     def is_city_used(self, city, played_cities):
         """Проверяет, был ли город уже назван."""
+        print(city)
         normalized_city = self.normalize_city_name(city)
         return normalized_city in (self.normalize_city_name(c) for c in played_cities)
 
@@ -90,7 +91,7 @@ class GorodaGame:
 
         # Проверка существования города
         try:
-            if not self.is_city_exist(user_input): #not self.connector.is_exsit(user_input):
+            if not self.connector.is_exsit(user_input):# not self.is_city_exist(user_input):
                 return f"Город '{user_input}' не существует."
         except Exception as e:
             return f"Ошибка при проверке города: {e}"
@@ -113,6 +114,17 @@ class GorodaGame:
                         and next_city[0].lower() == last_letter_of_user_word):
                     self.user_played_cities[chat_id].append(next_city)
                     self.start_timer(chat_id)
+                    self.city_info[chat_id] = next_city
                     return next_city
         self.stop_game(chat_id)
         return f"Я проиграл! не могу придумать город на букву - {last_letter_of_user_word}"
+    # def detail(self, chat_id):
+    #     if chat_id in self.city_info and self.city_info[chat_id]:
+    #         detail = self.connector.more_info_city(self.city_info[chat_id])
+    #     else:
+    #         detail = "Нет данных для показа. Попробуйте снова после следующего хода."
+    #     return detail
+    def detail(self, mes):
+        detail = self.connector.more_info_city(mes)
+        return detail
+

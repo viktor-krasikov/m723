@@ -5,6 +5,7 @@ from gtts import gTTS
 import speech_recognition as sr
 import soundfile as sf
 from gorodagame import GorodaGame
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 # Загрузка переменных среды
@@ -42,7 +43,9 @@ def handle_user_message(message):
     if chat_id in game_instance:
         user_input = message.text.strip()
         response = game_instance.next(chat_id, user_input)
-        bot.send_message(chat_id, response)
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton("Подробнее", callback_data="more_info"))
+        bot.send_message(chat_id, response, reply_markup=markup)
     else:
         bot.send_message(chat_id, "Сначала начните игру")
 @bot.message_handler(content_types=['voice'])
@@ -80,8 +83,11 @@ def handle_voice_message(message):
                     tts = gTTS(text=response, lang='ru')
                     tts.save(audio_file_path)  # Сохраняем аудио по тому же пути
 
+                    markup = InlineKeyboardMarkup()
+                    markup.add(InlineKeyboardButton("Подробнее", callback_data="more_info"))
+                    # bot.send_message(chat_id, response.content, reply_markup=markup)
                     with open(audio_file_path, 'rb') as audio_file:
-                        bot.send_voice(chat_id, audio_file)
+                        bot.send_voice(chat_id, audio_file, reply_markup=markup)
 
                 else:
                     bot.send_message(chat_id, "Сначала начните игру")
@@ -109,6 +115,11 @@ def handle_voice_message(message):
     if os.path.exists(audio_file_path):
         os.remove(audio_file_path)
 
+@bot.callback_query_handler(func=lambda call: call.data == "more_info")
+def callback_more_info(call):
+    chat_id = call.message.chat.id
+    # response_info = game_instance.detail(chat_id)
+    bot.reply_to(call.message, game_instance.detail(call.message))
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)

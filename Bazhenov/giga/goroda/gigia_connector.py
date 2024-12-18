@@ -36,10 +36,16 @@ class GigaConnector:
 
     def is_exsit(self, city):
         response = self.chat_model.invoke(
-            [HumanMessage(content=f"Существует ли город с названием {city}? Ответ: да или нет одним словом")])
+            [HumanMessage(content=f"Существует ли реально город с названием '{city}' на земле? Ответ: да или нет одним словом")])
         print(response.content)
         return 'да' in response.content.lower()
         # return response.content if response and response.content else None
+    def more_info_city(self, city_detail):
+        detailed_response = self.chat_model.invoke(
+            [HumanMessage(content=f"Расскажи о городе '{city_detail}' в пяти предложениях. Удивись что пользователь не знает о городе. Добавь сарказм.")])
+        print(detailed_response.content)
+        return detailed_response.content
+
 
 
 if __name__ == "__main__":
