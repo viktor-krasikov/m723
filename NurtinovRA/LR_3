@@ -1,0 +1,32 @@
+import telebot
+from langchain.schema import HumanMessage, SystemMessage
+from langchain.chat_models.gigachat import GigaChat
+
+# Авторизация в сервисе GigaChat
+chat = GigaChat(credentials='MGM0MTMwY2MtNzllMy00Y2ZkLThhM2MtY2MwZDUzNzQ1YjZlOjU1M2Q2ZDA4LTEyMTYtNGJmYS05M2Y3LTAwNDJkNDFhNGJiYQ==', verify_ssl_certs=False)
+
+# Начальные сообщения
+messages = [
+    SystemMessage(content="Ты детектив в киберпанковском городе, к тебе предоставили напарника-новичка (это я).")
+]
+
+# Создание экземпляра бота
+bot = telebot.TeleBot('8124760136:AAGrOFOzk1rlCiProCNpYQEXa8sbz6_FzkM')
+
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.send_message(message.chat.id, "Привет! Задайте мне вопрос.")
+
+# Обработчик текстовых сообщений
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    user_input = message.text
+    messages.append(HumanMessage(content=user_input))
+    res = chat(messages)  # Получаем ответ от GigaChat
+    messages.append(res)  # Добавляем ответ в сообщения
+    bot.send_message(message.chat.id, res.content)  # Отправляем ответ пользователю
+
+# Запуск бота
+if __name__ == '__main__':
+    bot.polling(none_stop=True)
