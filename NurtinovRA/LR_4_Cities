@@ -1,0 +1,88 @@
+import telebot
+from langchain.chat_models.gigachat import GigaChat
+from langchain.schema import SystemMessage
+import threading
+
+# Замените на ваш токен
+API_TOKEN = '8124760136:AAGrOFOzk1rlCiProCNpYQEXa8sbz6_FzkM'
+bot = telebot.TeleBot(API_TOKEN)
+
+# Введите токен для Gigachat
+GIGACHAT_TOKEN = 'MGM0MTMwY2MtNzllMy00Y2ZkLThhM2MtY2MwZDUzNzQ1YjZlOmE2OGVjZGQyLTc3YTEtNGZlMi04ODEwLTg0ZDY3Y2M0YmIxMQ=='
+# Авторизация в сервисе GigaChat
+chat = GigaChat(credentials=GIGACHAT_TOKEN, verify_ssl_certs=False)
+
+# Глобальная переменная для хранения последней буквы города бота
+last_bot_city_letter = None
+# Таймер
+timer = None
+
+# Массив для хранения использованных городов
+used_cities = []
+
+def start_timer(chat_id):
+    global timer
+    timer = threading.Timer(60.0, bot_wins, [chat_id])
+    timer.start()
+
+def bot_wins(chat_id, reason=""):
+    if reason:
+        bot.send_message(chat_id, reason)
+    else:
+        bot.send_message(chat_id, "Время вышло! Я выиграл!")
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "Привет! Давай играть в города! Пиши город, и я отвечу на него!")
+
+@bot.message_handler(func=lambda message: True)
+def game(message):
+    global last_bot_city_letter, timer
+    user_city = message.text.strip().lower()  # Приводим ввод к нижнему регистру
+    user_city_first_word = user_city.split()[0].rstrip('.,!?')  # Получаем первое слово и игнорируем знаки препинания
+
+    # Проверяем, если это первый ход или пользователь ответил правильно
+    if last_bot_city_letter is None or user_city_first_word[0] == last_bot_city_letter:
+        # Проверка на повторное использование города
+        if user_city_first_word in used_cities:
+            bot.reply_to(message, "Вы проиграли! Этот город уже использовался.")
+            return
+        used_cities.append(user_city_first_word)  # Добавляем город в использованные
+
+        # Останавливаем предыдущий таймер
+        if timer:
+            timer.cancel()
+
+        # Получаем букву, на которую должен начинаться следующий город
+        next_letter = get_next_letter(user_city_first_word)
+
+        # Отправляем запрос к GigaChat
+        response = chat([SystemMessage(content=f"Придумай город на букву: {next_letter}")])
+        bot_city = response.content.strip().split()[0].rstrip('.,!?')  # Получаем первое слово и игнорируем знаки препинания
+
+        # Проверяем, начинается ли ответ GigaChat на нужную букву
+        if bot_city and bot_city[0].lower() == next_letter:
+            if bot_city in used_cities:
+                bot_wins(message.chat.id, "Я проиграл! Этот город уже использовался.")
+                return
+            used_cities.append(bot_city)  # Добавляем город бота в использованные
+            bot.reply_to(message, f"Я выбираю: {bot_city.capitalize()}")
+            last_bot_city_letter = get_next_letter(bot_city)
+            start_timer(message.chat.id)  # Запускаем таймер
+        else:
+            bot_wins(message.chat.id, f"Я проиграл! Я не знаю города на букву '{next_letter.upper()}'.")
+    else:
+        # Игнорируем точки и другие знаки препинания при проверке буквы
+        last_bot_city_letter_cleaned = last_bot_city_letter.rstrip('.,!?')
+        bot.reply_to(message, f"Ваш город должен начинаться на букву '{last_bot_city_letter_cleaned.upper()}'.")
+
+def get_next_letter(city):
+    if len(city) == 0:
+        return ''  # Если город пустой, возвращаем пустую строку
+    last_char = city[-1].rstrip('.,!?')  # Игнорируем знаки препинания
+    if last_char in 'ыьъй':
+        return city[-2] if len(city) > 1 else last_char  # Берем предпоследнюю букву
+    else:
+        return last_char
+
+bot.polling()
